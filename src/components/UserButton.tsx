@@ -9,13 +9,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/components/ui/use-toast";
 
 // Componente para el botón de usuario
 export function UserButton() {
-  // En una implementación real, obtendríamos el usuario actual de un contexto de autenticación
-  const isLoggedIn = false;
-  const userRole = "admin"; // Podría ser: admin, vendedor, etc.
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const isLoggedIn = !!user;
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Sesión cerrada",
+      description: "Has cerrado sesión correctamente",
+    });
+    navigate("/login");
+  };
 
   return (
     <DropdownMenu>
@@ -29,24 +41,19 @@ export function UserButton() {
           <>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Usuario Demo</p>
+                <p className="text-sm font-medium leading-none">{user?.email || "Usuario"}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  usuario@ejemplo.com
+                  {user?.email}
                 </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link to="/perfil">Perfil</Link>
+              <Link to="/dashboard">Dashboard</Link>
             </DropdownMenuItem>
-            {userRole === "admin" && (
-              <DropdownMenuItem asChild>
-                <Link to="/admin">Administración</Link>
-              </DropdownMenuItem>
-            )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/login">Cerrar sesión</Link>
+            <DropdownMenuItem onClick={handleSignOut}>
+              Cerrar sesión
             </DropdownMenuItem>
           </>
         ) : (
