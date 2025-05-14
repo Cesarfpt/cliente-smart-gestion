@@ -1,86 +1,33 @@
 
+import * as React from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
-import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
-// Interfaz para los elementos de navegación
-interface NavItem {
-  title: string;
-  href: string;
-  disabled?: boolean;
-}
+interface MainNavProps extends React.HTMLAttributes<HTMLElement> {}
 
-// Props para el componente de navegación
-interface MainNavProps {
-  items?: NavItem[];
-}
+export function MainNav({ className, ...props }: MainNavProps) {
+  const { user } = useAuth();
 
-// Componente principal de navegación
-export function MainNav({ items }: MainNavProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const navItems = [
+    { title: "Inicio", href: "/" },
+    ...(user ? [
+      { title: "Dashboard", href: "/dashboard" },
+      { title: "Chat", href: "/chatbot" }
+    ] : [])
+  ];
 
   return (
-    <div className="flex gap-6 md:gap-10">
-      <Link to="/" className="flex items-center space-x-2">
-        <span className="hidden sm:inline-block font-bold text-xl">
-          WhatsGest
-        </span>
-      </Link>
-      
-      {/* Navegación para pantallas grandes */}
-      <nav className="hidden md:flex gap-6">
-        {items?.map(
-          (item, index) =>
-            item.href && (
-              <Link
-                key={index}
-                to={item.href}
-                className={cn(
-                  "flex items-center text-lg font-medium transition-colors hover:text-primary",
-                  item.disabled && "cursor-not-allowed opacity-80"
-                )}
-              >
-                {item.title}
-              </Link>
-            )
-        )}
-      </nav>
-      
-      {/* Menú móvil */}
-      <Button
-        className="md:hidden"
-        variant="ghost"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <Menu className="h-5 w-5" />
-        <span className="sr-only">Abrir menú</span>
-      </Button>
-      
-      {/* Menú desplegable para móviles */}
-      {isOpen && (
-        <div className="absolute top-16 left-0 right-0 bg-background border-b z-50 md:hidden">
-          <nav className="flex flex-col p-4 gap-4">
-            {items?.map(
-              (item, index) =>
-                item.href && (
-                  <Link
-                    key={index}
-                    to={item.href}
-                    className={cn(
-                      "text-lg font-medium transition-colors hover:text-primary",
-                      item.disabled && "cursor-not-allowed opacity-80"
-                    )}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {item.title}
-                  </Link>
-                )
-            )}
-          </nav>
-        </div>
-      )}
-    </div>
+    <nav className={cn("flex items-center space-x-4 lg:space-x-6", className)} {...props}>
+      {navItems.map((item) => (
+        <Link
+          key={item.href}
+          to={item.href}
+          className="text-sm font-medium transition-colors hover:text-primary"
+        >
+          {item.title}
+        </Link>
+      ))}
+    </nav>
   );
 }
