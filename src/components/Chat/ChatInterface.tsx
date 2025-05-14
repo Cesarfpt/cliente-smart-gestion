@@ -14,6 +14,16 @@ interface Message {
   timestamp: Date;
 }
 
+// Define interfaces that match our Supabase tables
+interface MessageHistoryRow {
+  id: string;
+  customer_id: string;
+  company_id: string | null;
+  message_content: string;
+  message_type: 'user' | 'bot';
+  message_timestamp: string;
+}
+
 export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -44,7 +54,7 @@ export const ChatInterface = () => {
       if (error) throw error;
 
       if (data) {
-        const formattedMessages: Message[] = data.map(msg => ({
+        const formattedMessages: Message[] = data.map((msg: MessageHistoryRow) => ({
           id: msg.id,
           content: msg.message_content,
           is_bot: msg.message_type === 'bot',
@@ -93,7 +103,7 @@ export const ChatInterface = () => {
           customer_id: user.id,
           message_content: newMessage,
           message_type: 'user',
-          company_id: (await supabase.from('users').select('company_id').eq('id', user.id).single()).data?.company_id
+          company_id: user.id ? (await supabase.from('users').select('company_id').eq('id', user.id).single()).data?.company_id : null
         });
       
       if (userMsgError) throw userMsgError;
@@ -118,7 +128,7 @@ export const ChatInterface = () => {
             customer_id: user.id,
             message_content: botResponse,
             message_type: 'bot',
-            company_id: (await supabase.from('users').select('company_id').eq('id', user.id).single()).data?.company_id
+            company_id: user.id ? (await supabase.from('users').select('company_id').eq('id', user.id).single()).data?.company_id : null
           });
           
         if (botMsgError) throw botMsgError;
