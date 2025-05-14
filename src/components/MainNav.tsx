@@ -4,12 +4,21 @@ import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
-interface MainNavProps extends React.HTMLAttributes<HTMLElement> {}
+interface NavItem {
+  title: string;
+  href: string;
+  disabled?: boolean;
+}
 
-export function MainNav({ className, ...props }: MainNavProps) {
+interface MainNavProps extends React.HTMLAttributes<HTMLElement> {
+  items?: NavItem[];
+}
+
+export function MainNav({ className, items, ...props }: MainNavProps) {
   const { user } = useAuth();
 
-  const navItems = [
+  // If items are provided, use them; otherwise use default navigation
+  const navItems = items || [
     { title: "Inicio", href: "/" },
     ...(user ? [
       { title: "Dashboard", href: "/dashboard" },
