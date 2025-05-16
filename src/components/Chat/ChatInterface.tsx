@@ -6,6 +6,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
+import { ChatMessage } from './ChatMessage';
+import { ChatTypingIndicator } from './ChatTypingIndicator';
+import { useBotConfig } from '@/hooks/useBotConfig';
 
 interface Message {
   id: string;
@@ -14,7 +17,7 @@ interface Message {
   timestamp: Date;
 }
 
-// Define interfaces that match our Supabase tables
+// Define interfaces que corresponden a nuestras tablas de Supabase
 interface MessageHistoryRow {
   id: string;
   customer_id: string;
@@ -22,6 +25,8 @@ interface MessageHistoryRow {
   message_content: string;
   message_type: 'user' | 'bot';
   message_timestamp: string;
+  is_processed: boolean | null;
+  response_delay_ms: number | null;
 }
 
 export const ChatInterface = () => {
@@ -31,6 +36,7 @@ export const ChatInterface = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { botConfig } = useBotConfig();
 
   useEffect(() => {
     if (user) {
@@ -41,6 +47,19 @@ export const ChatInterface = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Si es la primera vez y no hay mensajes, mostrar mensaje de bienvenida
+  useEffect(() => {
+    if (user && messages.length === 0 && !isLoading && botConfig) {
+      const welcomeMessage: Message = {
+        id: `welcome-${Date.now()}`,
+        content: botConfig.greeting_message || '¡Hola! Soy el asistente virtual. ¿En qué puedo ayudarte hoy?',
+        is_bot: true,
+        timestamp: new Date()
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, [user, messages.length, isLoading, botConfig]);
 
   const fetchMessages = async () => {
     try {
@@ -108,9 +127,25 @@ export const ChatInterface = () => {
       
       if (userMsgError) throw userMsgError;
       
+      // Buscar respuesta predefinida
+      const { data: responseData } = await supabase
+        .from('bot_responses')
+        .select('*')
+        .or(`keyword.ilike.%${newMessage.trim().toLowerCase()}%`)
+        .order('priority', { ascending: false })
+        .limit(1);
+      
       // Simular respuesta del bot (aquí se integraría con un servicio de AI real)
       setTimeout(async () => {
-        const botResponse = "¡Gracias por tu mensaje! Soy el asistente virtual, en este momento estoy en desarrollo, pronto podré ayudarte con tus consultas.";
+        let botResponse: string;
+        let responseDelay = 1000; // Delay por defecto
+        
+        // Si encontramos una respuesta predefinida, usarla
+        if (responseData && responseData.length > 0) {
+          botResponse = responseData[0].response;
+        } else {
+          botResponse = "¡Gracias por tu mensaje! Soy el asistente virtual, en este momento estoy en desarrollo, pronto podré ayudarte con tus consultas.";
+        }
         
         const botMessage: Message = {
           id: `bot-${Date.now()}`,
@@ -128,7 +163,9 @@ export const ChatInterface = () => {
             customer_id: user.id,
             message_content: botResponse,
             message_type: 'bot',
-            company_id: user.id ? (await supabase.from('users').select('company_id').eq('id', user.id).single()).data?.company_id : null
+            company_id: user.id ? (await supabase.from('users').select('company_id').eq('id', user.id).single()).data?.company_id : null,
+            is_processed: true,
+            response_delay_ms: responseDelay
           });
           
         if (botMsgError) throw botMsgError;
@@ -160,7 +197,7 @@ export const ChatInterface = () => {
       <div className="bg-primary text-primary-foreground p-4">
         <div className="flex items-center space-x-2">
           <Bot className="h-6 w-6" />
-          <h2 className="text-xl font-bold">Asistente Virtual</h2>
+          <h2 className="text-xl font-bold">{botConfig?.bot_name || "Asistente Virtual"}</h2>
         </div>
       </div>
       
@@ -171,36 +208,10 @@ export const ChatInterface = () => {
           </div>
         ) : (
           messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.is_bot ? 'justify-start' : 'justify-end'}`}
-            >
-              <div
-                className={`max-w-[75%] rounded-lg p-3 ${
-                  message.is_bot
-                    ? 'bg-muted text-muted-foreground'
-                    : 'bg-primary text-primary-foreground'
-                }`}
-              >
-                <p>{message.content}</p>
-                <p className="text-xs opacity-70 mt-1">
-                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
-            </div>
+            <ChatMessage key={message.id} message={message} />
           ))
         )}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-muted text-muted-foreground max-w-[75%] rounded-lg p-3">
-              <div className="flex space-x-2">
-                <div className="w-2 h-2 rounded-full bg-current animate-bounce"></div>
-                <div className="w-2 h-2 rounded-full bg-current animate-bounce delay-100"></div>
-                <div className="w-2 h-2 rounded-full bg-current animate-bounce delay-200"></div>
-              </div>
-            </div>
-          </div>
-        )}
+        {isLoading && <ChatTypingIndicator />}
         <div ref={messagesEndRef} />
       </div>
       

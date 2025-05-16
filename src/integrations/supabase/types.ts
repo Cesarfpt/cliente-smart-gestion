@@ -9,32 +9,122 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bot_config: {
+        Row: {
+          bot_name: string
+          company_id: string | null
+          created_at: string
+          farewell_message: string
+          greeting_message: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          bot_name?: string
+          company_id?: string | null
+          created_at?: string
+          farewell_message?: string
+          greeting_message?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          bot_name?: string
+          company_id?: string | null
+          created_at?: string
+          farewell_message?: string
+          greeting_message?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_config_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["company_id"]
+          },
+        ]
+      }
+      bot_responses: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          id: string
+          keyword: string
+          priority: number
+          response: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          keyword: string
+          priority?: number
+          response: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          keyword?: string
+          priority?: number
+          response?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_responses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["company_id"]
+          },
+        ]
+      }
       message_history: {
         Row: {
           company_id: string | null
           customer_id: string
           id: string
+          is_processed: boolean | null
           message_content: string
           message_timestamp: string
           message_type: string
+          response_delay_ms: number | null
         }
         Insert: {
           company_id?: string | null
           customer_id: string
           id?: string
+          is_processed?: boolean | null
           message_content: string
           message_timestamp?: string
           message_type: string
+          response_delay_ms?: number | null
         }
         Update: {
           company_id?: string | null
           customer_id?: string
           id?: string
+          is_processed?: boolean | null
           message_content?: string
           message_timestamp?: string
           message_type?: string
+          response_delay_ms?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "message_history_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["company_id"]
+          },
+        ]
       }
       users: {
         Row: {
