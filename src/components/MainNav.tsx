@@ -23,6 +23,7 @@ export function MainNav({ className, items, ...props }: MainNavProps) {
     ...(user ? [
       { title: "Dashboard", href: "/dashboard" },
       { title: "Chat", href: "/chatbot" },
+      { title: "Estadísticas", href: "/chatstats" },
       { title: "Configuración Bot", href: "/botconfig" }
     ] : [])
   ];

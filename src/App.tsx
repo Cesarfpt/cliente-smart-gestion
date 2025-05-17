@@ -13,6 +13,7 @@ import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import ChatBot from "./pages/ChatBot";
 import BotConfig from "./pages/BotConfig";
+import ChatStats from "./pages/ChatStats";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/chatbot" element={<ChatBot />} />
             <Route path="/botconfig" element={<BotConfig />} />
+            <Route path="/chatstats" element={<ChatStats />} />
             <Route 
               path="/dashboard" 
               element={
